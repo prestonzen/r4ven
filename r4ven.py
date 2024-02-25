@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import os
-from flask import Flask, request, Response
-from utils import get_file_data, update_webhook
-import time
+import json
 import requests
+from flask import Flask, request, Response
+import time
 
 # Using environment variables with defaults if not set
 TARGET_URL = os.getenv('TARGET_URL', 'http://localhost:8000/image')
@@ -17,6 +17,21 @@ PATH_TO_IMAGES_DIR = os.path.join(os.getcwd(), 'image')
 
 HTML_FILE_NAME = "index.html"
 app = Flask(__name__)
+
+def get_file_data(file_path):
+    """
+    Gets the file data
+    """
+    with open(file_path, 'r') as open_file:
+        return open_file.read()
+
+def update_webhook(webhook: str, webhook_data: dict):
+    """
+    Sends a post request to the given webhook
+    """
+    request_payload = json.dumps(webhook_data)
+    headers = {'Content-Type': 'application/json'}
+    requests.post(webhook, headers=headers, data=request_payload)
 
 @app.route("/", methods=["GET"])
 def get_website():
