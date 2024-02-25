@@ -1,35 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>R4VEN Tracker</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracky - Find your mom</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
-<body onload="getLocation()">
-
-  <iframe src="https://www.meetskip.com/chat" width="100%" height="900" style="border:none;"></iframe>
-
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script>
-    // Removed all non-core JavaScript, focusing only on the essential functionalities
-
-    function getLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(showPosition, showError);
-      } else {
-        console.log("Geolocation is not supported by this browser.");
-      }
-    }
-
-    function showPosition(position) {
-      // Function simplified for demonstration
-      console.log(`Latitude: ${position.coords.latitude}, Longitude: ${position.coords.longitude}`);
-      // Add here the logic to send this data to your server if needed
-    }
-
-    function showError(error) {
-      console.warn(`ERROR(${error.code}): ${error.message}`);
-    }
-
-    // Initiate webcam access and other functionalities as needed
-  </script>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+    <nav class="bg-gray-900 p-4">
+        <div class="container mx-auto">
+            <div class="flex items-center justify-between">
+                <div class="text-lg text-white">
+                    <i class="material-icons">track_changes</i> Tracky
+                </div>
+                <p class="text-gray-400 text-sm">Find your mom</p>
+            </div>
+        </div>
+    </nav>
+    <div id="app" class="container mx-auto mt-10">
+        <!-- Content will be loaded here -->
+    </div>
+    <script>
+        async function fetchData() {
+            try {
+                // Adjust the endpoint as necessary
+                const response = await axios.get('/location_update');
+                const data = response.data;
+                // Format and display the data in 'app' div
+                document.getElementById('app').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                console.error('There was an error fetching the data:', error);
+            }
+        }
+        fetchData();
+    </script>
 </body>
 </html>
