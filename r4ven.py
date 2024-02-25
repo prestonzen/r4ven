@@ -154,7 +154,8 @@ def get_new_discord_webhook():
     gets the new discord webhook from user
     """
     print(f'{G}Enter Discord Webhoook url:{W}')
-    dwebhook_input = input()
+    with open(DISCORD_WEBHOOK_FILE_NAME, 'r') as file:
+        dwebhook_input = file.read().strip()
     file1 = open('dwebhook.js', 'w')
     file1.write(dwebhook_input)
     file1.close()
